@@ -210,6 +210,7 @@ impl Processor {
             .checked_add(escrow_account.lamports())
             .ok_or(EscrowError::AmountOverflow)?;
         **escrow_account.lamports.borrow_mut() = 0;
+        *escrow_account.data.borrow_mut() = &mut [];
 
         Ok(())
     }
