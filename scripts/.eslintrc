@@ -1,0 +1,41 @@
+{
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "plugins": [
+    "@typescript-eslint",
+    "unused-imports",
+    "prettier"
+  ],
+  "rules": {
+    "eqeqeq": "error",
+    "no-console": "off",
+    "no-undef": "error",
+    "no-unused-vars": "error",
+    "unused-imports/no-unused-imports-ts": "error",
+    "prettier/prettier": "error",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unused-vars": "warn"
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "env": {
+    "browser": true,
+    "node": true,
+    "es6": true,
+    "jest": true
+  },
+  "ignorePatterns": [
+    "node_modules",
+    "build",
+    "dist",
+    "public"
+  ]
+}
