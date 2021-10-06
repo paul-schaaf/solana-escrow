@@ -64,7 +64,7 @@ const setup = async () => {
   console.log("Requesting SOL for Bob...");
   await connection.requestAirdrop(bobPublicKey, LAMPORTS_PER_SOL * 10);
   console.log("Requesting SOL for Id...");
-  await connection.requestAirdrop(bobPublicKey, LAMPORTS_PER_SOL * 10);
+  await connection.requestAirdrop(IdPublicKey, LAMPORTS_PER_SOL * 10);
 
   const [mintX, aliceTokenAccountForX, bobTokenAccountForX] = await setupMint(
     "X",
