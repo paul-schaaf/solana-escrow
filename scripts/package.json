@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "compile": "tsc -p ./tsconfig.json",
-    "start-validator": "solana-test-validator -r --mint E2F3fsS1HpsLb2VpEgsA5ztfo83CWFWW4jWpC6FvJ6qR --bpf-program 4yBTZXsuz7c1X3PJF4PPCJr8G6HnNAgRvzAWVoFZMncH",
+    "setup-validator": "solana-test-validator -r --mint E2F3fsS1HpsLb2VpEgsA5ztfo83CWFWW4jWpC6FvJ6qR --bpf-program 4yBTZXsuz7c1X3PJF4PPCJr8G6HnNAgRvzAWVoFZMncH",
     "setup": "npm run compile && node build/setup.js",
     "setup-alice": "npm run compile && node build/setup.js && node build/alice.js",
     "alice": "npm run compile && node build/alice.js",
