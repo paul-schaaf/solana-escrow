@@ -60,7 +60,7 @@ impl Processor {
             return Err(EscrowError::NotRentExempt.into());
         }
 
-        let mut escrow_info = Escrow::unpack_unchecked(&escrow_account.data.borrow())?;
+        let mut escrow_info = Escrow::unpack_unchecked(&escrow_account.try_borrow_data()?)?;
         if escrow_info.is_initialized() {
             return Err(ProgramError::AccountAlreadyInitialized);
         }
@@ -71,7 +71,7 @@ impl Processor {
         escrow_info.initializer_token_to_receive_account_pubkey = *token_to_receive_account.key;
         escrow_info.expected_amount = amount;
 
-        Escrow::pack(escrow_info, &mut escrow_account.data.borrow_mut())?;
+        Escrow::pack(escrow_info, &mut escrow_account.try_borrow_mut_data()?)?;
         let (pda, _nonce) = Pubkey::find_program_address(&[b"escrow"], program_id);
 
         let token_program = next_account_info(account_info_iter)?;
@@ -115,7 +115,7 @@ impl Processor {
 
         let pdas_temp_token_account = next_account_info(account_info_iter)?;
         let pdas_temp_token_account_info =
-            TokenAccount::unpack(&pdas_temp_token_account.data.borrow())?;
+            TokenAccount::unpack(&pdas_temp_token_account.try_borrow_data()?)?;
         let (pda, nonce) = Pubkey::find_program_address(&[b"escrow"], program_id);
 
         if amount_expected_by_taker != pdas_temp_token_account_info.amount {
@@ -126,7 +126,7 @@ impl Processor {
         let initializers_token_to_receive_account = next_account_info(account_info_iter)?;
         let escrow_account = next_account_info(account_info_iter)?;
 
-        let escrow_info = Escrow::unpack(&escrow_account.data.borrow())?;
+        let escrow_info = Escrow::unpack(&escrow_account.try_borrow_data()?)?;
 
         if escrow_info.temp_token_account_pubkey != *pdas_temp_token_account.key {
             return Err(ProgramError::InvalidAccountData);
@@ -205,12 +205,12 @@ impl Processor {
         )?;
 
         msg!("Closing the escrow account...");
-        **initializers_main_account.lamports.borrow_mut() = initializers_main_account
+        **initializers_main_account.try_borrow_mut_lamports()? = initializers_main_account
             .lamports()
             .checked_add(escrow_account.lamports())
             .ok_or(EscrowError::AmountOverflow)?;
-        **escrow_account.lamports.borrow_mut() = 0;
-        *escrow_account.data.borrow_mut() = &mut [];
+        **escrow_account.try_borrow_mut_lamports()? = 0;
+        *escrow_account.try_borrow_mut_data()? = &mut [];
 
         Ok(())
     }
