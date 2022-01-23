@@ -817,11 +817,9 @@ name = "solana-escrow"
 version = "0.1.0"
 dependencies = [
  "arrayref",
- "solana-frozen-abi",
  "solana-program",
  "spl-token",
  "thiserror",
- "zeroize",
 ]
 
 [[package]]
