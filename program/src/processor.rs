@@ -31,6 +31,10 @@ impl Processor {
                 msg!("Instruction: Exchange");
                 Self::process_exchange(accounts, amount, program_id)
             }
+            EscrowInstruction::Cancel {} => {
+                msg!("Instruction: Cancel ");
+                Self::process_cancel(accounts, program_id)
+            }
         }
     }
 
@@ -164,7 +168,7 @@ impl Processor {
         )?;
 
         let pda_account = next_account_info(account_info_iter)?;
-
+        let signers_seeds: &[&[&[u8]]] = &[&[&b"escrow"[..], &[nonce]]];
         let transfer_to_taker_ix = spl_token::instruction::transfer(
             token_program.key,
             pdas_temp_token_account.key,
@@ -182,9 +186,87 @@ impl Processor {
                 pda_account.clone(),
                 token_program.clone(),
             ],
-            &[&[&b"escrow"[..], &[nonce]]],
+            signers_seeds,
         )?;
 
+        Self::close_escrow(
+            token_program,
+            pdas_temp_token_account,
+            initializers_main_account,
+            pda,
+            pda_account,
+            escrow_account,
+            signers_seeds,
+        )
+    }
+
+    fn process_cancel(accounts: &[AccountInfo], program_id: &Pubkey) -> ProgramResult {
+        let account_info_iter = &mut accounts.iter();
+        let initializers_main_account = next_account_info(account_info_iter)?;
+
+        if !initializers_main_account.is_signer {
+            return Err(ProgramError::MissingRequiredSignature);
+        }
+
+        let pdas_temp_token_account = next_account_info(account_info_iter)?;
+        let pdas_temp_token_account_info =
+            TokenAccount::unpack(&pdas_temp_token_account.try_borrow_data()?)?;
+        let initializer_token_return_account = next_account_info(account_info_iter)?;
+        let escrow_account = next_account_info(account_info_iter)?;
+        let escrow_info = Escrow::unpack(&escrow_account.try_borrow_data()?)?;
+
+        if escrow_info.temp_token_account_pubkey != *pdas_temp_token_account.key {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        if escrow_info.initializer_pubkey != *initializers_main_account.key {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
+        let (pda, nonce) = Pubkey::find_program_address(&[b"escrow"], program_id);
+        let token_program = next_account_info(account_info_iter)?;
+        let pda_account = next_account_info(account_info_iter)?;
+        let signers_seeds: &[&[&[u8]]] = &[&[&b"escrow"[..], &[nonce]]];
+        let transfer_to_initializer_ix = spl_token::instruction::transfer(
+            token_program.key,
+            pdas_temp_token_account.key,
+            initializer_token_return_account.key,
+            &pda,
+            &[&pda],
+            pdas_temp_token_account_info.amount,
+        )?;
+        msg!("Calling the token program to transfer tokens to the initializer...");
+        invoke_signed(
+            &transfer_to_initializer_ix,
+            &[
+                pdas_temp_token_account.clone(),
+                initializer_token_return_account.clone(),
+                pda_account.clone(),
+                token_program.clone(),
+            ],
+            signers_seeds,
+        )?;
+
+        Self::close_escrow(
+            token_program,
+            pdas_temp_token_account,
+            initializers_main_account,
+            pda,
+            pda_account,
+            escrow_account,
+            signers_seeds,
+        )
+    }
+
+    fn close_escrow<'a, 'b>(
+        token_program: &'a AccountInfo<'b>,
+        pdas_temp_token_account: &'a AccountInfo<'b>,
+        initializers_main_account: &'a AccountInfo<'b>,
+        pda: Pubkey,
+        pda_account: &'a AccountInfo<'b>,
+        escrow_account: &'a AccountInfo<'b>,
+        signers_seed: &[&[&[u8]]],
+    ) -> ProgramResult {
         let close_pdas_temp_acc_ix = spl_token::instruction::close_account(
             token_program.key,
             pdas_temp_token_account.key,
@@ -201,7 +283,7 @@ impl Processor {
                 pda_account.clone(),
                 token_program.clone(),
             ],
-            &[&[&b"escrow"[..], &[nonce]]],
+            signers_seed,
         )?;
 
         msg!("Closing the escrow account...");
