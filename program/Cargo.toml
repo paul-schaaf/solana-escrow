@@ -9,10 +9,11 @@ publish = false
 no-entrypoint = []
 
 [dependencies]
-solana-program = "1.9.4"
+solana-program = "~1.8.14"
 thiserror = "1.0.24"
 spl-token = {version = "3.2.0", features = ["no-entrypoint"]}
 arrayref = "0.3.6"
+getrandom = { version = "0.1.14", features = ["dummy"] }
 
 [lib]
 crate-type = ["cdylib", "lib"]
